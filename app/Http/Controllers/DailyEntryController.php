@@ -11,6 +11,7 @@ class DailyEntryController extends Controller
     public function index()
     {
         $entries = DailyEntry::where('user_id', Auth::id())
+            ->with('metricValues')
             ->orderBy('entry_date', 'desc')
             ->get();
 

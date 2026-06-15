@@ -1,21 +1,30 @@
-# Daily Tracker
+# Daily Awareness Tracker
 
-A personal productivity web app built with Laravel. Track your daily creative work hours, rate the quality of your day, add notes, and define custom metrics to monitor whatever matters to you.
+A simple Laravel application to help users track essential daily awareness goals. Users can log creative work hours, rate the quality of their day, add notes, and define fully custom metrics to track whatever matters most to them.
+
 
 ## Features
 
-- Register and log in securely
-- Log daily entries (date, hours of creative work, quality score, notes)
-- Create and manage custom metrics (e.g. mood, exercise, focus)
+- Secure user registration and login (Laravel Breeze)
+- Log daily entries: hours of creative work, quality score (−2 to +2), and a note
+- Create and manage fully custom metrics (e.g. "times I got angry", "glasses of water")
 - Attach custom metric values to each daily entry
-- Mobile responsive UI
+- View and edit historical entries
+- Mobile responsive UI built with Tailwind CSS
+- Form validation on every input with user-friendly error messages
+- Per-user data isolation — users can only access their own records
+
+
+---
 
 ## Requirements
 
 - PHP 8.2+
 - Composer
 - Node.js & npm
-- SQLite Database
+- SQLite (default)
+
+---
 
 ## Setup
 
@@ -65,13 +74,25 @@ touch database/database.sqlite
 php artisan migrate
 ```
 
-### 6. Build frontend assets
+### 6. Seed demo data (optional)
+
+Populates sample users, 30 days of daily entries, and custom metrics per user:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Demo account:
+- **Email:** `test@example.com`
+- **Password:** `password`
+
+### 7. Build frontend assets
 
 ```bash
 npm run build
 ```
 
-### 7. Start the development server
+### 8. Start the development server
 
 ```bash
 php artisan serve
@@ -79,41 +100,73 @@ php artisan serve
 
 Visit `http://127.0.0.1:8000`, register an account, and start tracking.
 
-## Tech Stack
+---
 
-- **Backend:** Laravel 11
-- **Frontend:** Blade templates, Tailwind CSS
-- **Auth:** Laravel Breeze
-- **Database:** SQLite / MySQL / PostgreSQL (configurable)
+## Database Schema & Relationships
 
-## Seeding Demo Data
+```
+users
+ ├── hasMany ──► daily_entries
+ └── hasMany ──► custom_metrics
 
-To populate the database with sample users, entries, and metrics:
+daily_entries
+ ├── belongsTo ──► users
+ └── hasMany   ──► custom_metric_values
 
-```bash
-php artisan migrate:fresh --seed
+custom_metrics
+ ├── belongsTo ──► users
+ └── hasMany   ──► custom_metric_values
+
+custom_metric_values
+ ├── belongsTo ──► daily_entries
+ └── belongsTo ──► custom_metrics
 ```
 
-A demo account will be created:
-- **Email:** `test@example.com`
-- **Password:** `password`
+### Key fields
+
+| Table | Notable columns |
+|---|---|
+| `users` | `name`, `email`, `password` |
+| `daily_entries` | `user_id`, `entry_date`, `hours_creative_work`, `quality_score` (−2 to +2), `notes` |
+| `custom_metrics` | `user_id`, `name`, `unit` |
+| `custom_metric_values` | `daily_entry_id`, `custom_metric_id`, `value` |
+
+A `custom_metric_value` row links a specific metric to a specific day's entry, allowing each user's daily entry to carry an arbitrary number of user-defined tracked values.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Laravel 11 |
+| Auth | Laravel Breeze |
+| Frontend | Blade templates, Tailwind CSS |
+| Database | SQLite |
+| Testing | Pest PHP |
+
+---
 
 ## Design Decisions
 
-- **Custom Metrics** — Users can define their own tracking categories (e.g. mood, exercise, focus) and attach values to each daily entry. This makes the tracker flexible rather than rigid.
-- **Quality Score** — Stored as an integer from −2 to +2, giving a simple but meaningful range (bad → poor → neutral → good → great).
-- **Authorization** — Every controller checks `user_id` ownership before allowing updates or deletes, preventing users from accessing each other's data.
-- **Rate limiting** — Laravel's built-in `throttle` middleware is applied to the login route to protect against brute force attacks.
-- **SQLite for testing** — `phpunit.xml` uses an in-memory SQLite database so tests run fast without touching the real database.
+- **Custom Metrics** — The spec asks for extensibility ("define their own custom metric"). Rather than a fixed schema, users can create named metrics with a unit, then attach numeric values per day. This keeps the core table clean while allowing more flexibility.
+- **Quality Score** — Stored as a signed integer (−2 to +2).
+- **Authorization** — Every controller action verifies `user_id` ownership before reading, updating, or deleting a record. Users cannot access each other's data even by guessing IDs.
+- **Rate limiting** — Laravel's built-in `throttle` middleware is applied to login to defend against brute-force attacks.
+- **Upsert on metric values** — The `CustomMetricValueController` uses `updateOrCreate` so re-submitting a day's entry updates existing values rather than creating duplicates.
+
 
 ## Testing
 
-11 feature tests covering:
-- Authentication (guest redirect, authenticated access)
-- Daily entry CRUD (create, update, delete, metric values saved)
-- Custom metric CRUD (create, delete)
-- Custom metric value store + upsert behaviour
+Feature tests written with Pest PHP covering:
+
+- Authentication — guest redirect, authenticated access protection
+- Daily entry CRUD — create, update, delete, metric values persisted correctly
+- Custom metric CRUD — create, delete, ownership checks
+- Custom metric value — store and upsert behaviour
 
 ```bash
 php artisan test
 ```
+
+All tests use an in-memory SQLite database and are fully isolated from the development database.
