@@ -5,26 +5,25 @@
 
         @foreach($customMetrics as $metric)
             @php
-                   $value = $entry?->metricValues
-                   ->where('custom_metric_id', $metric->id)
-                   ->first()
-                   ->value ?? '';
-
+                $value = $entry?->metricValues
+                    ->where('custom_metric_id', $metric->id)
+                    ->first()
+                    ->value ?? '';
             @endphp
 
-            <div>
-                <x-input-label for="metric_{{ $metric->id }}" :value="$metric->name" />
-
+            <x-form-field
+                :name="'customMetrics.' . $metric->id"
+                :label="$metric->name"
+                :inputId="'metric_' . $metric->id"
+            >
                 <x-text-input
-                    id="metric_{{ $metric->id }}"
+                    :id="'metric_' . $metric->id"
                     type="text"
-                    name="customMetrics[{{ $metric->id }}]"
+                    :name="'customMetrics[' . $metric->id . ']'"
                     class="w-full bg-gray-700 border border-gray-600 rounded p-2"
-                    value="{{ old('customMetrics.' . $metric->id, $value) }}"
+                    :value="old('customMetrics.' . $metric->id, $value)"
                 />
-
-                <x-input-error :messages="$errors->get('customMetrics.' . $metric->id)" class="mt-1" />
-            </div>
+            </x-form-field>
         @endforeach
 
     </div>
