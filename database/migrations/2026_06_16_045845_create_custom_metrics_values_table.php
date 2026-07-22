@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('custom_metric_values', function (Blueprint $table) {
-         $table->id();
-         $table->foreignId('daily_entry_id')->constrained()->onDelete('cascade');
-         $table->foreignId('custom_metric_id')->constrained()->onDelete('cascade');
-         $table->integer('value'); // e.g. 3 times angry
-         $table->timestamps();
+            $table->id();
+            $table->foreignId('custom_metric_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('daily_entry_id')->constrained()->cascadeOnDelete();
+            $table->integer('value');
+            $table->timestamps();
         });
     }
 

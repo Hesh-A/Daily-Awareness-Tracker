@@ -2,35 +2,41 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\DailyReminderMail;
-use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\ReminderEmail;
+use App\Models\DailyEntry;
+use App\Models\CustomMetric;
+use App\Models\User;
 
+
+#[Signature('reminders:send-daily')]
+#[Description('Send daily reminder emails to users who have not logged an entry today')]
 class SendDailyReminders extends Command
 {
-    protected $signature   = 'reminders:send-daily';
-    protected $description = 'Send a reminder email to users who have not logged an entry today';
-
-    public function handle(): int
+    /**
+     * Execute the console command.
+     */
+    public function handle()
     {
         $today = now()->toDateString();
 
-        $users = User::whereDoesntHave('dailyEntries', function ($query) use ($today) {
-            $query->whereDate('entry_date', $today);
-        })->get();
+        $users = User::whereDoesntHave('dailyEntries', function($query) use ($today){
+
+          $query->where('entry_date',$today);
+        })->take(1)->get();
 
         if ($users->isEmpty()) {
-            $this->info('All users have already logged today. No reminders sent.');
-            return self::SUCCESS;
+          $this->info('Everyone has logged today. No reminders sent.');
+          return self::SUCCESS;
         }
 
-        foreach ($users as $user) {
-            Mail::to($user->email)->send(new DailyReminderMail($user));
+        foreach($users as $user){
+
+            Mail::to($user->email)->send(new ReminderEmail($user));
         }
 
-        $this->info("Reminders sent to {$users->count()} user(s).");
-
-        return self::SUCCESS;
     }
 }

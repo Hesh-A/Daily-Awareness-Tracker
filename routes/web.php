@@ -1,55 +1,43 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DailyEntryController;
-use App\Http\Controllers\CustomMetricController;
-use App\Http\Controllers\CustomMetricValueController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\PasswordController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomMetricController;
+use App\Http\Controllers\DailyEntryController;
+use App\Http\Controllers\DashboardController;
 
-// Root redirect
+
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('daily_entries.index') : redirect()->route('login');
+    return view('welcome');
 });
 
-// Guest routes
-Route::middleware('guest')->group(function () {
-    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store']);
-    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-});
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth','verified'])
+    ->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
 
-    // Profile
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Password update
-    Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
+    Route::get('/custom-metrics', [CustomMetricController::class, 'index'])->name('custom-metrics.index');
+    Route::get('/custom-metrics/create',[CustomMetricController::class, 'create'])->name('custom-metrics.create');
+    Route::post('/custom-metrics', [CustomMetricController::class, 'store'])->name('custom-metrics.store');
+    Route::put('/custom-metrics/{metric}', [CustomMetricController::class, 'update'])->name('custom-metrics.update');
+    Route::delete('/custom-metrics/{metric}', [CustomMetricController::class, 'destroy'])->name('custom-metrics.destroy');
 
-    // Logout
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/daily-entries', [DailyEntryController::class, 'index'])->name('daily-entries.index');
+    Route::post('/daily-entries', [DailyEntryController::class, 'store'])->name('daily-entries.store');
 
-    // Daily entries routes
-    Route::get('/daily-entries', [DailyEntryController::class, 'index'])->name('daily_entries.index');
-    Route::get('/daily-entries/create', [DailyEntryController::class, 'create'])->name('daily_entries.create');
-    Route::post('/daily-entries', [DailyEntryController::class, 'store'])->name('daily_entries.store');
-    Route::get('/daily-entries/{dailyEntry}/edit', [DailyEntryController::class, 'edit'])->name('daily_entries.edit');
-    Route::put('/daily-entries/{dailyEntry}', [DailyEntryController::class, 'update'])->name('daily_entries.update');
-    Route::delete('/daily-entries/{dailyEntry}', [DailyEntryController::class, 'destroy'])->name('daily_entries.destroy');
+    Route::get('/daily-entries/create', [DailyEntryController::class, 'create'])->name('daily-entries.create');
+    Route::get('/daily-entries/{entry}/edit', [DailyEntryController::class, 'edit'])->name('daily-entries.edit');
 
-    // Custom metrics routes
-    Route::get('/custom-metrics', [CustomMetricController::class, 'index'])->name('custom_metrics.index');
-    Route::get('/custom-metrics/create', [CustomMetricController::class, 'create'])->name('custom_metrics.create');
-    Route::post('/custom-metrics', [CustomMetricController::class, 'store'])->name('custom_metrics.store');
-    Route::delete('/custom-metrics/{customMetric}', [CustomMetricController::class, 'destroy'])->name('custom_metrics.destroy');
+    Route::get('/daily-entries/{entry}', [DailyEntryController::class, 'show'])->name('daily-entries.show');
 
-    // Custom metric values route
-    Route::post('/custom-metric-values', [CustomMetricValueController::class, 'store'])->name('custom_metric_values.store');
+    Route::put('/daily-entries/{entry}', [DailyEntryController::class, 'update'])->name('daily-entries.update');
+    Route::delete('/daily-entries/{entry}', [DailyEntryController::class, 'destroy'])->name('daily-entries.destroy');
 
 });
+
+require __DIR__.'/auth.php';

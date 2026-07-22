@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DailyEntry;
+use App\Models\CustomMetric;
+use App\Models\CustomMetricValue;
 use Illuminate\Support\Facades\Auth;
 
 class DailyEntryController extends Controller
@@ -11,7 +13,7 @@ class DailyEntryController extends Controller
     public function index()
     {
         $entries = DailyEntry::where('user_id', Auth::id())
-            ->with('metricValues')
+            ->with('metricValues.customMetric')
             ->orderBy('entry_date', 'desc')
             ->get();
 
@@ -20,55 +22,85 @@ class DailyEntryController extends Controller
 
     public function create()
     {
-        $metrics = auth()->user()->customMetrics;
+        $customMetrics = CustomMetric::where('user_id', Auth::id())->get();
 
-        return view('daily_entries.create', compact('metrics'));
+        return view('daily_entries.create', compact('customMetrics'));
+
+    }
+
+    public function show(DailyEntry $entry) 
+    {
+
+       $entry->load('metricValues.customMetric');
+
+        return view('daily_entries.show', [
+        'entry' => $entry
+         ]);
     }
 
     public function store(Request $request)
     {
+      
         $validated = $request->validate([
             'entry_date' => 'required|date',
             'hours_creative_work' => 'required|integer|min:0|max:24',
             'quality_score' => 'required|integer|min:-2|max:2',
             'notes' => 'nullable|string',
+            'customMetrics' => 'nullable|array',
+            'customMetrics.*' => 'nullable|integer|min:0',
         ]);
 
         $validated['user_id'] = Auth::id();
 
-        $entry = DailyEntry::create($validated);
+        $entry = DailyEntry::create([
+            'user_id' => Auth::id(),
+            'entry_date' => $validated['entry_date'],
+            'hours_creative_work' => $validated['hours_creative_work'],
+            'quality_score' => $validated['quality_score'],
+            'notes' => $validated['notes'] ?? null,
+        ]);
 
-        if ($request->metrics) {
-            foreach ($request->metrics as $metricId => $value) {
-                if ($value !== null && $value !== '') {
-                    $entry->metricValues()->create([
-                        'custom_metric_id' => $metricId,
-                        'value' => $value,
-                    ]);
-                }
-            }
+        foreach ($request->customMetrics ?? [] as $metricId => $value) {
+          if ($value !== null) {
+            $entry->metricValues()->updateOrCreate(
+                ['custom_metric_id' => $metricId],
+                ['value' => $value]
+            );
+          }
         }
 
-        return redirect()
-            ->route('daily_entries.index')
-            ->with('success', 'Daily entry created successfully.');
+
+        return redirect()->route('daily-entries.index')->with('success', 'Daily entry created successfully.');
+      
     }
 
-    public function edit(DailyEntry $dailyEntry)
+    public function edit(DailyEntry $entry)
     {
-        if ($dailyEntry->user_id !== Auth::id()) {
+
+         $customMetrics = CustomMetric::where('user_id', Auth::id())->get();
+    
+         $entry->load('metricValues');
+
+        return view('daily_entries.edit', [
+          'entry' => $entry,
+          'customMetrics' => $customMetrics
+    ]);
+    }
+
+    public function destroy(DailyEntry $entry)
+    {
+        if ($entry->user_id !== Auth::id()) {
             abort(403);
         }
 
-        $dailyEntry->load('metricValues');
-        $metrics = auth()->user()->customMetrics;
+        $entry->delete();
 
-        return view('daily_entries.edit', compact('dailyEntry', 'metrics'));
+        return redirect()->route('daily-entries.index')->with('success', 'Daily entry deleted successfully.');
     }
 
-    public function update(Request $request, DailyEntry $dailyEntry)
+    public function update(Request $request, DailyEntry $entry)
     {
-        if ($dailyEntry->user_id !== Auth::id()) {
+        if ($entry->user_id !== Auth::id()){
             abort(403);
         }
 
@@ -77,36 +109,24 @@ class DailyEntryController extends Controller
             'hours_creative_work' => 'required|integer|min:0|max:24',
             'quality_score' => 'required|integer|min:-2|max:2',
             'notes' => 'nullable|string',
+            'customMetrics' => 'nullable|array',
+            'customMetrics.*' => 'nullable|integer|min:0'
         ]);
 
-        $dailyEntry->update($validated);
+        $entry->update($validated);
 
-        if ($request->metrics) {
-            foreach ($request->metrics as $metricId => $value) {
-                if ($value !== null && $value !== '') {
-                    $dailyEntry->metricValues()->updateOrCreate(
-                        ['custom_metric_id' => $metricId],
-                        ['value' => $value]
-                    );
-                }
-            }
+        foreach ($request->customMetrics ?? [] as $metricId => $value) {
+          if ($value !== null) {
+            $entry->metricValues()->updateOrCreate(
+                ['custom_metric_id' => $metricId],
+                ['value' => $value]
+            );
+          }
         }
 
-        return redirect()
-            ->route('daily_entries.index')
-            ->with('success', 'Daily entry updated successfully.');
-    }
 
-    public function destroy(DailyEntry $dailyEntry)
-    {
-        if ($dailyEntry->user_id !== Auth::id()) {
-            abort(403);
-        }
+       
 
-        $dailyEntry->delete();
-
-        return redirect()
-            ->route('daily_entries.index')
-            ->with('success', 'Daily entry deleted successfully.');
+        return redirect()->route('daily-entries.index')->with('success', 'Daily entry updated successfully.');
     }
 }

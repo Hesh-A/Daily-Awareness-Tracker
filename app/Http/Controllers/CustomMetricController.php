@@ -2,44 +2,72 @@
 
 namespace App\Http\Controllers;
 
+
 use Illuminate\Http\Request;
 use App\Models\CustomMetric;
 use Illuminate\Support\Facades\Auth;
 
 class CustomMetricController extends Controller
 {
-    public function index(){
-
-        $metrics = CustomMetric::where('user_id', Auth::id())->get();
-        return view('custom_metrics.index', compact('metrics'));
-
-    }
-
-    public function create(){
-        return view('custom_metrics.create');
-    }
-
-    public function store(Request $request){
-
+    public function store(Request $request)
+    {
         $validated = $request->validate([
+
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
         ]);
 
         $validated['user_id'] = Auth::id();
 
         CustomMetric::create($validated);
 
-        return redirect()->route('custom_metrics.index')->with('success', 'Custom metric created successfully.');
+        return redirect('/custom-metrics');
     }
 
-    public function destroy(CustomMetric $customMetric){
+    public function create()
+    {
+      
+      return view('custom_metrics.create');
+     
+    }
 
-        if($customMetric->user_id != Auth::id()){
+    public function index()
+    {
+
+        $metrics = CustomMetric::where('user_id', Auth::id())->get();
+
+        return view('custom_metrics.index', compact('metrics'));
+    }
+
+
+    public function destroy(CustomMetric $metric)
+    {
+       if ($metric->user_id !== Auth::id()) {
             abort(403);
         }
 
-        $customMetric->delete();
+        $metric->delete();
 
-        return redirect()->route('custom_metrics.index')->with('success', 'Custom metric deleted successfully.');
+        return redirect()->route('custom-metrics.index')->with('success', 'Custom metric deleted successfully.');
+        
     }
+
+    public function update(Request $request, CustomMetric $metric)
+    {
+
+        if ($metric->user_id !== Auth::id()){
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $metric->update($validated);
+
+        return redirect()->route('custom-metrics.index')->with('success', 'Custom metric updated successfully.');
+
+    }
+
 }

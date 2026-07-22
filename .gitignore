@@ -1,28 +1,60 @@
+# Logs & system files
 *.log
+Thumbs.db
 .DS_Store
+
+# Environment files
 .env
-.env.testing
 .env.backup
 .env.production
+.env.testing
+
+# PHP / Laravel caches
 .phpactor.json
 .phpunit.result.cache
+/.phpunit.cache
+
+# IDE / Editor folders
 /.codex
 /.cursor/
 /.idea
 /.nova
-/.phpunit.cache
 /.vscode
 /.zed
-/auth.json
-/node_modules
+
+# Node / NPM
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Composer
+/vendor/
+
+# Laravel storage & build
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
-_ide_helper.php
+
+# Laravel 4 specific
+bootstrap/compiled.php
+app/storage/
+
+# Laravel 5 & Lumen specific
+public_html/storage
+public_html/hot
+
+# Homestead
 Homestead.json
 Homestead.yaml
-Thumbs.db
+
+# Vagrant
+/.vagrant
+
+# Auth
+auth.json
+
+# Helper files
+_ide_helper.php

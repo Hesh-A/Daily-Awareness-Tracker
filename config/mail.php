@@ -115,4 +115,14 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    'mailers' => [
+    
+            // start mailtrap transport
+            'mailtrap-sdk' => [
+                'transport' => 'mailtrap-sdk'
+            ],
+            // end mailtrap transport
+    
+    ],
+
 ];
