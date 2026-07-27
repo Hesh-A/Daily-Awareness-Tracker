@@ -58,3 +58,4 @@ auth.json
 
 # Helper files
 _ide_helper.php
+tests/Browser/Screenshots
