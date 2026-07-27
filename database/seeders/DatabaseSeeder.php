@@ -16,9 +16,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
-        DailyEntry::factory()->count(5)->create();
-
-
+        $this->call([
+            UserSeeder::class,
+            DailyEntrySeeder::class,
+        ]);
     }
 }
