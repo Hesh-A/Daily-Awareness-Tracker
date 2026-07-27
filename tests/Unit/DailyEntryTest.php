@@ -29,7 +29,7 @@ it('assigns fillable attributes correctly', function () {
 
   ]);
   // they get assigned to the daily-entry correctly
-  expect($entry->id)->toBe($user->id);
+  expect($entry->user_id)->toBe($user->id);
   expect($entry-> hours_creative_work )->toBe(2);
   expect($entry-> quality_score )->toBe(1);
   expect($entry-> notes )->toBe("Hello World!");
