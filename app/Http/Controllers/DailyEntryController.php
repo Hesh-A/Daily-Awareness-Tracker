@@ -70,12 +70,16 @@ class DailyEntryController extends Controller
         }
 
 
+
         return redirect()->route('daily-entries.index')->with('success', 'Daily entry created successfully.');
       
     }
 
     public function edit(DailyEntry $entry)
     {
+        if ($entry->user_id !== Auth::id()) {
+            abort(403);
+        }
 
          $customMetrics = CustomMetric::where('user_id', Auth::id())->get();
     
