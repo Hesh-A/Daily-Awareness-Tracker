@@ -6,17 +6,20 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\User;
 
-class DailyEntry_Reminder extends Notification
+class DailyEntry_Reminder extends Notification implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    protected $user;
+
+    public function __construct(User $user)
     {
-        //
+        $this->user = $user;
     }
 
     /**
@@ -37,7 +40,7 @@ class DailyEntry_Reminder extends Notification
         $url = url('/daily-entries/create');
         return (new MailMessage)
 
-            ->greeting('Hello!')
+            ->greeting('Hello ' . $this->user->name . '!')
             ->line('This is a friendly reminder to enter your daily entry.')
             ->action('Enter a Daily Entry', $url)
             ->line('Thank you for using our application!');
